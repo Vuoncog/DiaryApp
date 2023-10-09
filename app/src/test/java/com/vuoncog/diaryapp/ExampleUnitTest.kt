@@ -1,4 +1,4 @@
-package com.example.diaryapp
+package com.vuoncog.diaryapp
 
 import org.junit.Test
 
