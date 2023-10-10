@@ -2,4 +2,5 @@
     <string name="app_name">DiaryApp</string>
     <string name="outlined_button_icon">Outlined button icon</string>
     <string name="diary_app_logo">Diary app logo</string>
+    <string name="google_logo">Google logo</string>
 </resources>

@@ -1,5 +1,6 @@
-package com.vuoncog.diaryapp.presentation.authentication
+package com.example.diaryapp.presentation.authentication
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -17,15 +18,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.diaryapp.R
-import com.vuoncog.diaryapp.presentation.components.CustomOutlinedButton
-import com.vuoncog.diaryapp.ui.theme.*
+import com.example.diaryapp.presentation.components.CustomOutlinedButton
+import com.example.diaryapp.ui.theme.*
 
 @Composable
-fun AuthenticationContent() {
+fun AuthenticationContent(
+    loadingState: Boolean,
+    onSignInClicked: () -> Unit
+) {
     Surface(
         modifier = Modifier
             .fillMaxSize()
-
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -40,7 +43,10 @@ fun AuthenticationContent() {
                 modifier = Modifier.weight(1f)
             )
             CustomOutlinedButton(
-                onClicked = {}
+                loadingState = loadingState,
+                onClicked = {
+                    onSignInClicked()
+                }
             )
         }
     }
@@ -49,6 +55,7 @@ fun AuthenticationContent() {
 @Composable
 fun AuthenticationWelcomeBack(
     modifier: Modifier = Modifier,
+    @DrawableRes logo: Int = R.drawable.diary_logo,
     title: String = "Welcome back",
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     description: String = "Please sign in to create your own diary",
@@ -60,7 +67,7 @@ fun AuthenticationWelcomeBack(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            painter = painterResource(id = R.drawable.logo),
+            painter = painterResource(id = logo),
             contentDescription = stringResource(R.string.diary_app_logo),
             modifier = Modifier.size(160.dp)
         )
@@ -92,5 +99,7 @@ fun AuthenticationWelcomeBack(
 @Preview(showBackground = true)
 @Composable
 fun AuthenticationContentPreview() {
-    AuthenticationContent()
+    AuthenticationContent(
+        loadingState = false,
+        onSignInClicked = {})
 }

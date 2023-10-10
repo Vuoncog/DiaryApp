@@ -1,4 +1,4 @@
-package com.vuoncog.diaryapp.presentation.components
+package com.example.diaryapp.presentation.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.animateContentSize

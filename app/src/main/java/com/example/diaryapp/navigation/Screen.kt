@@ -1,6 +1,6 @@
-package com.vuoncog.diaryapp.navigation
+package com.example.diaryapp.navigation
 
-import com.vuoncog.diaryapp.utility.Constant.WRITE_ARGUMENT
+import com.example.diaryapp.utility.Constant.WRITE_ARGUMENT
 
 sealed class Screen(val route: String) {
     object Authentication: Screen(

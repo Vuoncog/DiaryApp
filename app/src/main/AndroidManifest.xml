@@ -7,15 +7,19 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/logo"
+        android:roundIcon="@drawable/logo"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.DiaryApp"
+        android:windowDisablePreview="true"
+        android:windowIsTranslucent="true"
         tools:targetApi="31">
         <activity
-            android:name="com.vuoncog.diaryapp.MainActivity"
+            android:name="com.example.diaryapp.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.DiaryApp.DiarySplashScreen">
+            android:theme="@style/Theme.DiaryApp.DiarySplashScreen"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

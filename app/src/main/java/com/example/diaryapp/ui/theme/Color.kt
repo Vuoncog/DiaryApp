@@ -1,4 +1,4 @@
-package com.vuoncog.diaryapp.ui.theme
+package com.example.diaryapp.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val md_theme_light_primary = Color(0xFF8C4F00)

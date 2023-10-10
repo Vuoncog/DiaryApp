@@ -1,4 +1,4 @@
-package com.vuoncog.diaryapp.utility
+package com.example.diaryapp.utility
 
 object Constant {
     const val APP_ID = "diary-app-service-unhnq"

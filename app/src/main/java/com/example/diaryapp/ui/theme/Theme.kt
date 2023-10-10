@@ -1,12 +1,12 @@
-package com.vuoncog.diaryapp.ui.theme
+package com.example.diaryapp.ui.theme
 
 import android.app.Activity
 import android.os.Build
-import android.util.TypedValue
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -98,12 +98,19 @@ fun DiaryAppTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val activity = view.context as Activity
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
+                activity.window.isNavigationBarContrastEnforced = false
+            }
 
             val controller = WindowCompat.getInsetsController(activity.window, view)
             controller.let {
-                activity.window.statusBarColor = colorScheme.primary.toArgb()
-                it.isAppearanceLightStatusBars = darkTheme
+                it.isAppearanceLightStatusBars = !darkTheme
+                it.isAppearanceLightNavigationBars = !darkTheme
             }
+
+            activity.window.statusBarColor = Color.Transparent.toArgb()
+            activity.window.navigationBarColor = Color.Transparent.toArgb()
+
         }
     }
 
