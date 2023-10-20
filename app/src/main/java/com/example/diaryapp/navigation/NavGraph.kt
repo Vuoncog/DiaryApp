@@ -15,11 +15,14 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.diaryapp.data.repository.MongoDB
+import com.example.diaryapp.models.RequestState
 import com.stevdzasan.onetap.rememberOneTapSignInState
 import com.example.diaryapp.presentation.authentication.AuthenticationScreen
 import com.example.diaryapp.presentation.authentication.AuthenticationViewModel
 import com.example.diaryapp.presentation.components.CustomAlertDialog
 import com.example.diaryapp.presentation.home.HomeScreen
+import com.example.diaryapp.presentation.home.HomeViewModel
 import com.example.diaryapp.utility.Constant.APP_ID
 import com.example.diaryapp.utility.Constant.WRITE_ARGUMENT
 import com.stevdzasan.messagebar.rememberMessageBarState
@@ -76,9 +79,16 @@ private fun NavGraphBuilder.homeRoute(
     composable(
         route = Screen.Home.route
     ) {
+        val homeViewModel: HomeViewModel = viewModel()
+        val diaries by homeViewModel.diaries
         val scope = rememberCoroutineScope()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         var isDialogOpened by remember { mutableStateOf(false) }
+
+        LaunchedEffect(key1 = Unit){
+            MongoDB.configureMongoDB()
+        }
+
         HomeScreen(
             drawerState = drawerState,
             onMenuClicked = {
@@ -89,8 +99,8 @@ private fun NavGraphBuilder.homeRoute(
             onDateClicked = {},
             onSignOutClicked = {
                 isDialogOpened = true
-
-            }
+            },
+            diaries = diaries
         )
 
         CustomAlertDialog(

@@ -1,4 +1,5 @@
 package com.example.diaryapp.ui.theme
+
 import androidx.compose.ui.graphics.Color
 
 val md_theme_light_primary = Color(0xFF8C4F00)
@@ -63,3 +64,58 @@ val md_theme_dark_scrim = Color(0xFF000000)
 
 
 val seed = Color(0xFFA58C77)
+
+sealed class EmotionColor(
+    val primaryColor: Color,
+    val containerColor: Color,
+) {
+    object Amazed : EmotionColor(
+        primaryColor = Color(0xFFFFFAA0),
+        containerColor = Color(0xFFFFFDDD)
+    )
+
+    object Angry : EmotionColor(
+        primaryColor = Color(0xFFFF837B),
+        containerColor = Color(0xFFFFD9D6)
+    )
+
+    object Satisfied : EmotionColor(
+        primaryColor = Color(0xFFD6E9FF),
+        containerColor = Color(0xFFEEF6FF)
+    )
+
+    object Confused : EmotionColor(
+        primaryColor = Color(0xFFF7AE7F),
+        containerColor = Color(0xFFFFE8D9)
+    )
+
+    object Sad : EmotionColor(
+        primaryColor = Color(0xFF779ECB),
+        containerColor = Color(0xFFBBCBDC)
+    )
+
+    object Loved : EmotionColor(
+        primaryColor = Color(0xFFF8DADA),
+        containerColor = Color(0xFFFFEBEB)
+    )
+
+    object Normal : EmotionColor(
+        primaryColor = Color(0xFFDFDED4),
+        containerColor = Color(0xFFEDEDEC)
+    )
+
+    object Sickness : EmotionColor(
+        primaryColor = Color(0xFF8CA2B0),
+        containerColor = Color(0xFFD1D4D6)
+    )
+
+    object Yummy : EmotionColor(
+        primaryColor = Color(0xFFFF9845),
+        containerColor = Color(0xFFFFDEC3)
+    )
+
+    object Doubt : EmotionColor(
+        primaryColor = Color(0xFFCAA3DC),
+        containerColor = Color(0xFFDEC8E8)
+    )
+}

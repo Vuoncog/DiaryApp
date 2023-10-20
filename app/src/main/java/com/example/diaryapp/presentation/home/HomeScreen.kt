@@ -1,12 +1,11 @@
 package com.example.diaryapp.presentation.home
 
 import android.annotation.SuppressLint
-import android.util.Log.d
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -16,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.example.diaryapp.R
+import com.example.diaryapp.models.Diaries
+import com.example.diaryapp.models.RequestState
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -24,7 +25,12 @@ fun HomeScreen(
     onMenuClicked: () -> Unit,
     onDateClicked: () -> Unit,
     onSignOutClicked: () -> Unit,
+    diaries: Diaries
 ) {
+    var paddingValues by remember {
+        mutableStateOf(PaddingValues())
+    }
+
     NavigationDrawer(
         drawerState = drawerState,
         onSignOutClicked = onSignOutClicked
@@ -41,6 +47,29 @@ fun HomeScreen(
                 )
             },
             content = {
+                when (diaries) {
+                    is RequestState.Success -> {
+                        HomeContent(
+                            diaries = diaries.data,
+                            paddingValues = it
+                        )
+                    }
+                    is RequestState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                    is RequestState.Error -> {
+                        EmptyScreen(
+                            title = diaries.error.toString(),
+                            description = diaries.error.message.toString()
+                        )
+                    }
+                    else -> {}
+                }
 
             }
         )
