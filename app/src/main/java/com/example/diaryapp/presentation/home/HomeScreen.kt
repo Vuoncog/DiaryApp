@@ -4,10 +4,13 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -18,6 +21,7 @@ import com.example.diaryapp.R
 import com.example.diaryapp.models.Diaries
 import com.example.diaryapp.models.RequestState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
@@ -25,11 +29,15 @@ fun HomeScreen(
     onMenuClicked: () -> Unit,
     onDateClicked: () -> Unit,
     onSignOutClicked: () -> Unit,
+    navigateToWrite: () -> Unit,
+    navigateToWriteWithArgs: (String) -> Unit,
     diaries: Diaries
 ) {
     var paddingValues by remember {
         mutableStateOf(PaddingValues())
     }
+
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     NavigationDrawer(
         drawerState = drawerState,
@@ -39,21 +47,34 @@ fun HomeScreen(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.surface)
                 .statusBarsPadding()
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .nestedScroll(connection = scrollBehavior.nestedScrollConnection),
             topBar = {
                 HomeTopBar(
                     onMenuClicked = onMenuClicked,
-                    onDateClicked = onDateClicked
+                    onDateClicked = onDateClicked,
+                    scrollBehavior = scrollBehavior
                 )
+            },
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = navigateToWrite,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "FAB")
+                }
             },
             content = {
                 when (diaries) {
                     is RequestState.Success -> {
                         HomeContent(
                             diaries = diaries.data,
-                            paddingValues = it
+                            paddingValues = it,
+                            navigateToWriteWithArgs = navigateToWriteWithArgs
                         )
                     }
+
                     is RequestState.Loading -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -62,12 +83,14 @@ fun HomeScreen(
                             CircularProgressIndicator()
                         }
                     }
+
                     is RequestState.Error -> {
                         EmptyScreen(
                             title = diaries.error.toString(),
                             description = diaries.error.message.toString()
                         )
                     }
+
                     else -> {}
                 }
 

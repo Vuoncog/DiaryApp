@@ -1,13 +1,9 @@
 package com.example.diaryapp.navigation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -16,18 +12,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.diaryapp.data.repository.MongoDB
-import com.example.diaryapp.models.RequestState
+import com.example.diaryapp.models.Mood
 import com.stevdzasan.onetap.rememberOneTapSignInState
 import com.example.diaryapp.presentation.authentication.AuthenticationScreen
 import com.example.diaryapp.presentation.authentication.AuthenticationViewModel
 import com.example.diaryapp.presentation.components.CustomAlertDialog
 import com.example.diaryapp.presentation.home.HomeScreen
 import com.example.diaryapp.presentation.home.HomeViewModel
+import com.example.diaryapp.presentation.write.WriteScreen
+import com.example.diaryapp.presentation.write.WriteViewModel
 import com.example.diaryapp.utility.Constant.APP_ID
 import com.example.diaryapp.utility.Constant.WRITE_ARGUMENT
 import com.stevdzasan.messagebar.rememberMessageBarState
 import io.realm.kotlin.mongodb.App
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.lang.Exception
 
@@ -37,7 +36,7 @@ fun SetUpNavigation(
     onDataLoad: () -> Unit,
     navController: NavHostController
 ) {
-    LaunchedEffect(key1 = Unit){
+    LaunchedEffect(key1 = Unit) {
         delay(100)
         onDataLoad()
     }
@@ -47,17 +46,25 @@ fun SetUpNavigation(
             navigationToHome = { navController.navigate(Screen.Home.route) }
         )
         homeRoute(
-            navigationToAuth = {
+            navigateToAuth = {
                 navController.popBackStack()
                 navController.navigate(Screen.Authentication.route)
             },
-            navigationToWrite = { navController.navigate(Screen.Write.route) }
+            navigateToWrite = { navController.navigate(Screen.Write.route) },
+            navigateToWriteWithArgs = { diaryId ->
+                navController.navigate(Screen.Write.passDiaryId(diaryId))
+            }
         )
-        writeRoute()
+        writeRoute(
+            navigationToHome = { navController.popBackStack() }
+        )
     }
 }
 
-private fun NavGraphBuilder.writeRoute() {
+@OptIn(ExperimentalFoundationApi::class)
+private fun NavGraphBuilder.writeRoute(
+    navigationToHome: () -> Unit
+) {
     composable(
         route = Screen.Write.route,
         arguments = listOf(navArgument(
@@ -68,13 +75,35 @@ private fun NavGraphBuilder.writeRoute() {
             defaultValue = null
         })
     ) {
-
+        val pagerState = rememberPagerState {
+            Mood.values().size
+        }
+        val viewModel: WriteViewModel = viewModel()
+        val uiState = viewModel.uiState
+        val editScreen by viewModel.editScreen.collectAsState()
+        WriteScreen(
+            pagerState = pagerState,
+            navigateToHome = navigationToHome,
+            onEditClicked = { viewModel.changeToEditScreen() },
+            onTitleChanged = { viewModel.setTitle(it) },
+            onDescriptionChanged = { viewModel.setDescription(it) },
+            onButtonClicked = {
+                viewModel.insertDiary(
+                    diary = it.apply { mood = Mood.values()[pagerState.currentPage].name },
+                    onSucces = navigationToHome,
+                    onError = {}
+                )
+            },
+            uiState = uiState,
+            editScreen = editScreen
+        )
     }
 }
 
 private fun NavGraphBuilder.homeRoute(
-    navigationToAuth: () -> Unit,
-    navigationToWrite: () -> Unit
+    navigateToAuth: () -> Unit,
+    navigateToWrite: () -> Unit,
+    navigateToWriteWithArgs: (String) -> Unit,
 ) {
     composable(
         route = Screen.Home.route
@@ -85,7 +114,7 @@ private fun NavGraphBuilder.homeRoute(
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         var isDialogOpened by remember { mutableStateOf(false) }
 
-        LaunchedEffect(key1 = Unit){
+        LaunchedEffect(key1 = Unit) {
             MongoDB.configureMongoDB()
         }
 
@@ -100,7 +129,9 @@ private fun NavGraphBuilder.homeRoute(
             onSignOutClicked = {
                 isDialogOpened = true
             },
-            diaries = diaries
+            diaries = diaries,
+            navigateToWrite = navigateToWrite,
+            navigateToWriteWithArgs = navigateToWriteWithArgs
         )
 
         CustomAlertDialog(
@@ -112,7 +143,7 @@ private fun NavGraphBuilder.homeRoute(
                 scope.launch {
                     App.create(APP_ID).currentUser?.logOut()
                 }
-                navigationToAuth()
+                navigateToAuth()
             })
     }
 }

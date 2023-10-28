@@ -14,9 +14,11 @@ import androidx.compose.ui.unit.sp
 fun HomeTopBar(
     onMenuClicked: () -> Unit,
     onDateClicked: () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior,
     color: Color = MaterialTheme.colorScheme.onSurface
 ) {
     TopAppBar(
+        scrollBehavior = scrollBehavior,
         navigationIcon = {
             IconButton(onClick = onMenuClicked) {
                 Icon(
@@ -43,6 +45,6 @@ fun HomeTopBar(
                     tint = color
                 )
             }
-        }
+        },
     )
 }

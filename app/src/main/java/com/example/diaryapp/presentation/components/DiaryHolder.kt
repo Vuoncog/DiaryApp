@@ -2,6 +2,10 @@ package com.example.diaryapp.presentation.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -56,7 +60,7 @@ fun DiaryCard(
                     MutableInteractionSource()
                 }
             ) {
-                onDiaryCardClicked(diary._id.toString())
+                onDiaryCardClicked(diary._id.toHexString())
             },
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -79,7 +83,6 @@ fun DiaryCard(
                     shape = RoundedCornerShape(12.dp)
                 )
                 .padding(bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             DiaryHeader(
                 icon = Mood.valueOf(diary.mood).icon,
@@ -87,9 +90,10 @@ fun DiaryCard(
                 title = diary.title,
                 time = diary.date.toInstant()
             )
+            Spacer(modifier = Modifier.padding(bottom = 8.dp))
             Text(
                 text = diary.description,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier.padding(horizontal = 12.dp),
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 4,
                 style = MaterialTheme.typography.bodyMedium
@@ -102,7 +106,15 @@ fun DiaryCard(
                     isHiddenImage = isHiddenImage
                 )
             }
-            AnimatedVisibility(visible = !isHiddenImage) {
+            AnimatedVisibility(
+                visible = !isHiddenImage,
+                enter = fadeIn() + expandVertically(
+                    spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
+            ) {
                 Gallery(
                     images = diary.image,
                     color = Mood.valueOf(diary.mood).primaryColor

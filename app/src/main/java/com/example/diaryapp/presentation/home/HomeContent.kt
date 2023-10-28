@@ -29,7 +29,8 @@ import java.time.LocalDate
 @Composable
 fun HomeContent(
     diaries: Map<LocalDate, List<Diary>>,
-    paddingValues: PaddingValues
+    paddingValues: PaddingValues,
+    navigateToWriteWithArgs: (String) -> Unit,
 ) {
     if (diaries.isNotEmpty()) {
         LazyColumn(
@@ -49,11 +50,11 @@ fun HomeContent(
 
                 items(
                     items = listDiaries,
-                    key = { it._id }
+                    key = { it._id.toHexString() }
                 ) { diary ->
                     DiaryCard(
                         diary = diary,
-                        onDiaryCardClicked = {}
+                        onDiaryCardClicked = navigateToWriteWithArgs
                     )
                 }
             }
@@ -135,6 +136,7 @@ fun EmptyScreen(
 fun HomeContentPreview() {
     HomeContent(
         diaries = mapOf(),
-        paddingValues = PaddingValues()
+        paddingValues = PaddingValues(),
+        navigateToWriteWithArgs = {}
     )
 }

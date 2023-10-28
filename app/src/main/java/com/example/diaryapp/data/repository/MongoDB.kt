@@ -16,10 +16,10 @@ import io.realm.kotlin.query.Sort
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import org.mongodb.kbson.ObjectId
 import java.time.ZoneId
 
 object MongoDB : MongoRepository {
-
     private val user = App.create(APP_ID).currentUser
     private lateinit var realm: Realm
 
@@ -60,7 +60,37 @@ object MongoDB : MongoRepository {
                 flow { emit(RequestState.Error(e)) }
             }
         } else {
-            flow { emit(RequestState.Error(Exception("User is not authenticated."))) }
+            flow { emit(RequestState.Error(UserIsNotAuthenticated())) }
+        }
+    }
+
+    override fun getSelectedDiary(diaryId: ObjectId): RequestState<Diary> {
+        return if (user != null){
+            try {
+                val diary = realm.query<Diary>(query = "_id == $0", diaryId).find().first()
+                RequestState.Success(diary)
+            }catch (e: Exception){
+                RequestState.Error(e)
+            }
+        }else{
+            RequestState.Error(UserIsNotAuthenticated())
+        }
+    }
+
+    override suspend fun addNewDiary(diary: Diary): RequestState<Diary> {
+        return if (user != null){
+            realm.write {
+                try {
+                    val addedDiary = copyToRealm(diary.apply { ownerId = user.id })
+                    RequestState.Success(diary)
+                }catch (e: Exception){
+                    RequestState.Error(e)
+                }
+            }
+        }else{
+            RequestState.Error(UserIsNotAuthenticated())
         }
     }
 }
+
+private class UserIsNotAuthenticated: Exception("User is not authenticated")

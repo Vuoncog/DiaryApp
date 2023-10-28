@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
@@ -65,6 +66,7 @@ fun Gallery(
                     .crossfade(true)
                     .build(),
                 contentDescription = "Gallery Image",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .clip(imageShape)
                     .size(imageSize)
@@ -94,7 +96,10 @@ fun ShowGalleryButton(
     onClicked: () -> Unit,
     isHiddenImage: Boolean
 ) {
-    TextButton(onClick = onClicked) {
+    TextButton(
+        modifier = Modifier.padding(top = 8.dp),
+        onClick = onClicked
+    ) {
         Text(text = if (isHiddenImage) "Show gallery" else "Hide gallery")
     }
 }
