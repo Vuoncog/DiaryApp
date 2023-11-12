@@ -52,7 +52,7 @@ fun DiaryCard(
 ) {
     val context = LocalContext.current
     var isGalleryOpened by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
 
     var imageDownloadURL = remember {
         mutableStateListOf<Uri>()
@@ -60,11 +60,12 @@ fun DiaryCard(
 
     LaunchedEffect(key1 = isGalleryOpened) {
         if (isGalleryOpened && imageDownloadURL.isEmpty()) {
-            isLoading = true
+//            isLoading = true
             fetchImageFromDatabase(
                 remoteImagePaths = diary.images.toList(),
                 onImageDownload = { image ->
                     imageDownloadURL.add(image)
+                    isLoading = false
                 },
                 onFailed = {
                     isLoading = false
@@ -144,7 +145,7 @@ fun DiaryCard(
                 )
             }
             AnimatedVisibility(
-                visible = isGalleryOpened.and(!isLoading),
+                visible = isGalleryOpened && !isLoading,
                 enter = fadeIn() + expandVertically(
                     spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,

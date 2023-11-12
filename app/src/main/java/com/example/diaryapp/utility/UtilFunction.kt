@@ -42,9 +42,10 @@ fun fetchImageFromDatabase(
                 storage.child(imagePath.trim()).downloadUrl
                     .addOnSuccessListener {
                         onImageDownload(it)
-                        if (imagePath.lastIndexOf(remoteImagePaths.last()) == index) {
-                            onReadyToDisplay()
-                        }
+//                        if (imagePath.lastIndexOf(remoteImagePaths.last()) == index) {
+//                            onReadyToDisplay()
+//                        }
+                        onReadyToDisplay()
                     }
                     .addOnFailureListener {
                         onFailed(it)
