@@ -35,7 +35,8 @@ fun DateHeader(
             Text(
                 text = localDate.dayOfWeek.name.take(3),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
             )
         }
 

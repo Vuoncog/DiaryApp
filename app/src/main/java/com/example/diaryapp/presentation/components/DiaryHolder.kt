@@ -1,5 +1,8 @@
 package com.example.diaryapp.presentation.components
 
+import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -25,10 +28,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.diaryapp.models.Diary
@@ -36,6 +39,7 @@ import com.example.diaryapp.models.Mood
 import com.example.diaryapp.ui.theme.md_theme_light_inverseSurface
 import com.example.diaryapp.ui.theme.md_theme_light_onSurface
 import com.example.diaryapp.ui.theme.seed
+import com.example.diaryapp.utility.fetchImageFromDatabase
 import com.example.diaryapp.utility.toInstant
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -46,8 +50,39 @@ fun DiaryCard(
     diary: Diary,
     onDiaryCardClicked: (String) -> Unit
 ) {
-    var isHiddenImage by remember {
-        mutableStateOf(false)
+    val context = LocalContext.current
+    var isGalleryOpened by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    var imageDownloadURL = remember {
+        mutableStateListOf<Uri>()
+    }
+
+    LaunchedEffect(key1 = isGalleryOpened) {
+        if (isGalleryOpened && imageDownloadURL.isEmpty()) {
+            isLoading = true
+            fetchImageFromDatabase(
+                remoteImagePaths = diary.images.toList(),
+                onImageDownload = { image ->
+                    imageDownloadURL.add(image)
+                },
+                onFailed = {
+                    isLoading = false
+                    isGalleryOpened = false
+                    Toast.makeText(
+                        context,
+                        "Images not uploaded yet." +
+                                "Wait a little bit, or try uploading again.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    Log.d("DiaryHolder", it.toString())
+                },
+                onReadyToDisplay = {
+                    isLoading = false
+                    isGalleryOpened = true
+                },
+            )
+        }
     }
 
     Row(
@@ -96,18 +131,20 @@ fun DiaryCard(
                 modifier = Modifier.padding(horizontal = 12.dp),
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 4,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = md_theme_light_onSurface,
             )
-            if (diary.image.isNotEmpty()) {
+            if (diary.images.isNotEmpty()) {
                 ShowGalleryButton(
                     onClicked = {
-                        isHiddenImage = !isHiddenImage
+                        isGalleryOpened = !isGalleryOpened
                     },
-                    isHiddenImage = isHiddenImage
+                    isGalleryOpened = isGalleryOpened,
+                    isLoading = isLoading
                 )
             }
             AnimatedVisibility(
-                visible = !isHiddenImage,
+                visible = isGalleryOpened.and(!isLoading),
                 enter = fadeIn() + expandVertically(
                     spring(
                         dampingRatio = Spring.DampingRatioMediumBouncy,
@@ -116,7 +153,7 @@ fun DiaryCard(
                 )
             ) {
                 Gallery(
-                    images = diary.image,
+                    images = imageDownloadURL,
                     color = Mood.valueOf(diary.mood).primaryColor
                 )
             }
@@ -179,17 +216,3 @@ fun Modifier.bottomBorder(strokeWidth: Dp, color: Color) = composed(
         }
     }
 )
-
-@Preview
-@Composable
-fun DiaryHeaderPreview() {
-    DiaryCard(
-        diary = Diary().apply {
-            mood = Mood.Loved.name
-            title = "My diary"
-            description =
-                "Lorem ipsum dolor sit amet consectetur. Sed duis aliquam tempor tortor. Enim phasellus tristique massa diam sed feugiat est enim sollicitudin. Amet suspendisse nec ac"
-        },
-        onDiaryCardClicked = {}
-    )
-}

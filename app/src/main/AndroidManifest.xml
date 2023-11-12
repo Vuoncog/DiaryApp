@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name=".DiaryApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,6 +16,7 @@
         android:windowIsTranslucent="true"
         tools:targetApi="31">
         <activity
+            android:windowSoftInputMode="adjustResize"
             android:name="com.example.diaryapp.MainActivity"
             android:exported="true"
             android:label="@string/app_name"

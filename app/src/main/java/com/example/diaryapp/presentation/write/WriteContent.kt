@@ -1,30 +1,38 @@
 @file:OptIn(
-    ExperimentalFoundationApi::class, ExperimentalFoundationApi::class,
-    ExperimentalFoundationApi::class
+    ExperimentalFoundationApi::class,
 )
 
 package com.example.diaryapp.presentation.write
 
+import android.net.Uri
 import android.widget.Toast
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,25 +40,36 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomCenter
+import androidx.compose.ui.Alignment.Companion.BottomStart
 import androidx.compose.ui.Alignment.Companion.Center
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.diaryapp.models.Diary
+import com.example.diaryapp.models.GalleryImage
+import com.example.diaryapp.models.GalleryState
 import com.example.diaryapp.models.Mood
+import com.example.diaryapp.presentation.components.GalleryUploader
 import com.example.diaryapp.ui.theme.seed
+import com.example.diaryapp.utility.toRealmInstant
+import io.realm.kotlin.ext.toRealmList
 import kotlinx.coroutines.launch
+import org.mongodb.kbson.ObjectId
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -60,34 +79,57 @@ fun WriteContent(
     paddingValues: PaddingValues,
     pagerState: PagerState,
     uiState: UiState,
-    onTitleChanged: (String) -> Unit,
-    onDescriptionChanged: (String) -> Unit,
-    onButtonClicked: (Diary) -> Unit,
+    galleryState: GalleryState,
     date: LocalDate,
     time: LocalTime,
     isEditScreen: Boolean,
+    onTitleChanged: (String) -> Unit,
+    onDescriptionChanged: (String) -> Unit,
+    onSaveClicked: (Diary) -> Unit,
+    onDeleteClicked: (ObjectId) -> Unit,
+    onAddClicked: () -> Unit,
+    onImageSelected: (Uri) -> Unit,
+    onImageClicked: (GalleryImage) -> Unit,
     descriptionPlaceholder: String = "Describe the moment",
     titlePlaceholder: String = "Memory about...",
     iconColor: Color = MaterialTheme.colorScheme.onSurface.copy(0.5f),
     iconButtonSize: Dp = 32.dp,
 ) {
-    var currentPage = remember {
+    val currentPage = remember {
         mutableIntStateOf(pagerState.currentPage)
     }
     val moodSize = Mood.values().size - 1
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    val focusManager = LocalFocusManager.current
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(key1 = scrollState.maxValue) {
+        scrollState.scrollTo(scrollState.maxValue)
+    }
+
     Column(
         modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
             .padding(
                 top = paddingValues.calculateTopPadding(),
-                bottom = paddingValues.calculateBottomPadding(),
             )
             .padding(horizontal = 16.dp)
+            .imePadding()
     ) {
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .imePadding()
+                .padding(bottom = 16.dp)
+                .verticalScroll(
+                    state = scrollState
+                )
+        ) {
             MoodComponent(
                 currentPage = currentPage,
-                uiCheck = isEditScreen,
+                isEditScreen = isEditScreen,
                 iconButtonSize = iconButtonSize,
                 pagerState = pagerState,
                 iconColor = iconColor,
@@ -95,8 +137,10 @@ fun WriteContent(
             )
 
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalAlignment = CenterHorizontally
             ) {
                 Text(
                     text = dateFormatter(date),
@@ -111,15 +155,25 @@ fun WriteContent(
                 )
             }
 
+            Divider(
+                modifier = Modifier
+                    .width(160.dp)
+                    .height(1.dp)
+                    .align(CenterHorizontally),
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+            )
+
             TextField(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
                 value = uiState.title,
                 onValueChange = onTitleChanged,
-                textStyle = MaterialTheme.typography.titleMedium,
+                textStyle = MaterialTheme.typography.titleLarge,
                 placeholder = {
                     Text(
                         text = titlePlaceholder,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.outline
                     )
                 },
@@ -129,15 +183,23 @@ fun WriteContent(
                     imeAction = ImeAction.Next
                 ),
                 keyboardActions = KeyboardActions(
-                    onNext = {}
+                    onNext = {
+                        scope.launch {
+                            scrollState.animateScrollTo(Int.MAX_VALUE)
+                            focusManager.moveFocus(FocusDirection.Down)
+                        }
+                    }
                 ),
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Unspecified,
                     unfocusedIndicatorColor = Color.Unspecified,
+                    unfocusedPlaceholderColor = Color.Unspecified,
                     disabledIndicatorColor = Color.Unspecified,
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.outline
-                )
+                    disabledContainerColor = Color.Unspecified,
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                ),
+                enabled = isEditScreen
             )
 
             TextField(
@@ -157,14 +219,19 @@ fun WriteContent(
                     focusedIndicatorColor = Color.Unspecified,
                     unfocusedIndicatorColor = Color.Unspecified,
                     disabledIndicatorColor = Color.Unspecified,
-                    unfocusedPlaceholderColor = MaterialTheme.colorScheme.outline
+                    unfocusedPlaceholderColor = Color.Unspecified,
+                    disabledContainerColor = Color.Unspecified,
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
                 ),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Next
                 ),
                 keyboardActions = KeyboardActions(
-                    onNext = {}
-                )
+                    onNext = {
+                        focusManager.clearFocus()
+                    }
+                ),
+                enabled = isEditScreen
             )
         }
         if (isEditScreen) {
@@ -172,16 +239,22 @@ fun WriteContent(
                 modifier = Modifier
                     .padding(horizontal = 56.dp)
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 12.dp),
                 onClick = {
                     if (uiState.title.isNotBlank()
                         && uiState.description.isNotBlank()
-                        && uiState.selectedDiaryId == null
+//                        && uiState.selectedDiaryId == null
                     ) {
-                        onButtonClicked(
+                        onSaveClicked(
                             Diary().apply {
+                                if (uiState.selectedDiaryId != null) {
+                                    this._id = ObjectId(uiState.selectedDiaryId)
+                                }
                                 this.title = uiState.title
                                 this.description = uiState.description
+                                this.date = uiState.date.toRealmInstant()
+                                this.images =
+                                    galleryState.images.map { it.remoteImagePath }.toRealmList()
                             }
                         )
                     } else {
@@ -199,7 +272,41 @@ fun WriteContent(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
+        } else {
+            Button(
+                modifier = Modifier
+                    .padding(horizontal = 56.dp)
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                onClick = {
+                    onDeleteClicked(ObjectId(uiState.selectedDiaryId!!))
+                }) {
+                Text(
+                    text = "Delete",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onError
+                )
+            }
         }
+    }
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = BottomStart,
+    ) {
+        GalleryUploader(
+            modifier = Modifier
+                .padding(bottom = 64.dp)
+                .padding(horizontal = 16.dp)
+                .navigationBarsPadding(),
+            galleryState = galleryState,
+            isEditScreen = isEditScreen,
+            onAddClicked = onAddClicked,
+            onImageSelected = onImageSelected,
+            onImageClicked = onImageClicked
+        )
     }
 }
 
@@ -207,7 +314,7 @@ fun WriteContent(
 @Composable
 private fun MoodComponent(
     currentPage: MutableState<Int>,
-    uiCheck: Boolean,
+    isEditScreen: Boolean,
     iconButtonSize: Dp,
     pagerState: PagerState,
     iconColor: Color,
@@ -220,7 +327,7 @@ private fun MoodComponent(
         verticalAlignment = CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        if ((currentPage.value != 0).and(uiCheck)) {
+        if ((currentPage.value != 0).and(isEditScreen)) {
             IconButton(
                 modifier = Modifier.size(
                     iconButtonSize
@@ -242,19 +349,19 @@ private fun MoodComponent(
             modifier = Modifier
                 .weight(1f)
                 .padding(
-                    start = if (!(currentPage.value != 0).and(uiCheck)) iconButtonSize else 0.dp,
-                    end = if (!(currentPage.value != moodSize).and(uiCheck)) iconButtonSize else 0.dp
+                    start = if (!(currentPage.value != 0).and(isEditScreen)) iconButtonSize else 0.dp,
+                    end = if (!(currentPage.value != moodSize).and(isEditScreen)) iconButtonSize else 0.dp
                 ),
             contentAlignment = Center
         ) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.width(160.dp),
-                userScrollEnabled = uiCheck
+                userScrollEnabled = isEditScreen
             ) { page ->
                 currentPage.value = page
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     AsyncImage(
@@ -279,7 +386,7 @@ private fun MoodComponent(
                 }
             }
         }
-        if ((currentPage.value != moodSize).and(uiCheck)) {
+        if ((currentPage.value != moodSize).and(isEditScreen)) {
             IconButton(
                 modifier = Modifier.size(
                     iconButtonSize
@@ -299,7 +406,7 @@ private fun MoodComponent(
     }
 }
 
-private fun dateFormatter(localDate: LocalDate): String =
+fun dateFormatter(localDate: LocalDate): String =
     "${
         localDate.dayOfWeek.name.take(3).lowercase().replaceFirstChar {
             it.titlecase()
@@ -311,7 +418,7 @@ private fun dateFormatter(localDate: LocalDate): String =
             } +
             " ${localDate.year}"
 
-private fun timeFormatter(localTime: LocalTime): String =
+fun timeFormatter(localTime: LocalTime): String =
     DateTimeFormatter
         .ofPattern("hh:mm a")
         .format(localTime).uppercase()

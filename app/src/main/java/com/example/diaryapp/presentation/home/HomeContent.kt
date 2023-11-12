@@ -31,15 +31,14 @@ fun HomeContent(
     diaries: Map<LocalDate, List<Diary>>,
     paddingValues: PaddingValues,
     navigateToWriteWithArgs: (String) -> Unit,
+    navigateToWrite: () -> Unit
 ) {
     if (diaries.isNotEmpty()) {
         LazyColumn(
             modifier = Modifier
+                .navigationBarsPadding()
                 .padding(
                     top = paddingValues.calculateTopPadding(),
-                    bottom = paddingValues.calculateBottomPadding(),
-                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr)
                 )
                 .padding(horizontal = 16.dp)
         ) {
@@ -60,7 +59,9 @@ fun HomeContent(
             }
         }
     } else {
-        EmptyScreen()
+        EmptyScreen(
+            onClicked = navigateToWrite
+        )
     }
 }
 
@@ -68,7 +69,8 @@ fun HomeContent(
 fun EmptyScreen(
     title: String = "Your Diary is empty",
     description: String = "Let's start to create your first memory.",
-    buttonLabel: String = "Create diary"
+    buttonLabel: String = "Create diary",
+    onClicked: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -116,7 +118,7 @@ fun EmptyScreen(
         )
         Spacer(modifier = Modifier.padding(bottom = 32.dp))
         Button(
-            onClick = { /*TODO*/ },
+            onClick = onClicked,
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -129,14 +131,4 @@ fun EmptyScreen(
             )
         }
     }
-}
-
-@Preview
-@Composable
-fun HomeContentPreview() {
-    HomeContent(
-        diaries = mapOf(),
-        paddingValues = PaddingValues(),
-        navigateToWriteWithArgs = {}
-    )
 }

@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import com.example.diaryapp.utility.Constant.CLIENT_ID
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.stevdzasan.messagebar.ContentWithMessageBar
 import com.stevdzasan.messagebar.MessageBarState
 import com.stevdzasan.onetap.OneTapSignInState
@@ -24,9 +26,10 @@ fun AuthenticationScreen(
     oneTapState: OneTapSignInState,
     messageBarState: MessageBarState,
     onSignInClicked: () -> Unit,
-    onTokenReceived: (String) -> Unit,
     onDialogDismissed: (String) -> Unit,
     navigateToHome: () -> Unit,
+    onFirebaseLoginSuccessfully: (String) -> Unit,
+    onFirebaseLoginFail: (Exception) -> Unit,
 ) {
     Scaffold(
         modifier = Modifier
@@ -48,7 +51,15 @@ fun AuthenticationScreen(
         state = oneTapState,
         clientId = CLIENT_ID,
         onTokenIdReceived = { tokenId ->
-            onTokenReceived(tokenId)
+            val credential = GoogleAuthProvider.getCredential(tokenId, null)
+            FirebaseAuth.getInstance().signInWithCredential(credential)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful){
+                        onFirebaseLoginSuccessfully(tokenId)
+                    }else{
+                        task.exception?.let { onFirebaseLoginFail(it) }
+                    }
+                }
         },
         onDialogDismissed = { message ->
             onDialogDismissed(message)
